@@ -1,0 +1,6 @@
+name = Varnish Authcache roles
+description = Role-based caching with varnish 
+package = varnish
+version = 6.x-0.1
+core = 6.x
+dependencies[] = varnish_authcache

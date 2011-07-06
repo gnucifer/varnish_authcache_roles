@@ -1,0 +1,64 @@
+<?php
+function varnish_authcache_roles_settings_form() {
+	$form = array();
+	$form['varnish_authcache_roles'] = array(
+		'#type' => 'select',
+		'#title' => t('Roles'),
+		'#description' => t('Roles to use for varnish cache key hashing.'),
+		'#multiple' => TRUE,
+		'#options' => user_roles(),
+		'#default_value' => variable_get('varnish_authcache_roles', array(DRUPAL_AUTHENTICATED_RID)),
+	);
+
+	//TODO: perhaps implement exclusion as a context/rule reaction/action also/instead
+
+	$form['varnish_authcache_roles_exclude'] = array(
+		'#type' => 'select',
+		'#title' => t('Exclude roles'),
+		'#description' => t('Users of one of these roles will be excluded from authenticated caching in varnish.'),
+		'#multiple' => TRUE,
+		'#options' => user_roles(),
+		'#default_value' => variable_get('varnish_authcache_roles_exclude', array()),
+	);
+
+
+	$form['varnish_authcache_roles_exclude_admin'] = array(
+		'#type' => 'checkbox',
+		'#title' => t('Exclude administrator'),
+		'#description' => t('Admin (user 1) will excluded from authenticated caching in varnish.'),
+		'#default_value' => variable_get('varnish_authcache_roles_exclude_admin', 1),
+	);
+
+
+	return system_settings_form($form);
+}
+
+function varnish_authcache_roles_menu(){
+	return array(
+		'admin/settings/varnish-authcache/varnish-authcache-roles' => array(
+			'title' => 'Varnish Authcache Roles',
+			'access arguments' => array('administer site configuration'),
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('varnish_authcache_roles_settings_form'),
+			'type' => MENU_LOCAL_TASK,
+		)
+	);
+}
+
+function varnish_authcache_roles_varnish_authcache_hash() {
+	global $user;
+	
+	$user_roles = array_keys($user->roles);
+
+	if(
+			!(
+				variable_get('varnish_authcache_roles_exclude_admin', 1) && $user->uid == 1 ||
+				count(array_intersect($user_roles, variable_get('varnish_authcache_roles_exclude', array())))
+			)
+	) {
+		return array_intersect($user_roles, variable_get('varnish_authcache_roles', array(DRUPAL_AUTHENTICATED_RID)));
+	}
+
+	return FALSE;
+}
+?>

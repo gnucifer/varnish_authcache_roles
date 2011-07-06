@@ -1,0 +1,6 @@
+<?php
+function varnish_authcache_roles_uninstall(){
+	db_query("DELETE FROM {variable} WHERE name LIKE '%s%'", 'varnish_authcache_roles');
+	cache_clear_all('variables', 'cache');
+}
+?>
